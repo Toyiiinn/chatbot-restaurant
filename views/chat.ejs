@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurant Chatbot</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">🍽️ Restaurant ChatBot</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type your option..." autocomplete="off">
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script>
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    let currentOrderId = null;
+    let currentAmount = 0;
+
+    window.onload = () => {
+      addBotMessage(`Welcome to our restaurant! 🍽️\n\nHow can I help you today?\n\n📋 **Menu Options:**\n1️⃣ - Place an order\n9️⃣7️⃣ - See current order\n9️⃣9️⃣ - Checkout order\n9️⃣8️⃣ - Order history\n0️⃣ - Cancel order`);
+    };
+
+    const addBotMessage = (text, showPayment = false, orderId = null, amount = 0) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.innerHTML = `<div class="bot-message">${text}</div>`;
+      
+      if (showPayment) {
+        currentOrderId = orderId;
+        currentAmount = amount;
+        const payBtn = document.createElement('button');
+        payBtn.className = 'payment-btn';
+        payBtn.textContent = '💳 Pay Now';
+        payBtn.onclick = () => initiatePayment();
+        msgDiv.querySelector('.bot-message').appendChild(payBtn);
+      }
+      
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    const addUserMessage = (text) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message user-message';
+      msgDiv.innerHTML = `<div class="message-content">${text}</div>`;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    const showTyping = () => {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message';
+      typingDiv.id = 'typing';
+      typingDiv.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    const removeTyping = () => {
+      const typing = document.getElementById('typing');
+      if (typing) typing.remove();
+    };
+
+    const sendMessage = () => {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      addUserMessage(message);
+      userInput.value = '';
+      showTyping();
+
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      })
+      .then(res => res.json())
+      .then(data => {
+        removeTyping();
+        addBotMessage(
+          data.message + (data.options ? '\n\n' + data.options : ''),
+          data.showPayment,
+          data.orderId,
+          data.amount
+        );
+      })
+      .catch(err => {
+        removeTyping();
+        addBotMessage('Sorry, something went wrong. Please try again.');
+      });
+    };
+
+    const initiatePayment = () => {
+      const handler = PaystackPop.setup({
+        key: process.env.PAYSTACK_PUBLIC_KEY,
+        email: 'customer@example.com',
+        amount: currentAmount * 100,
+        currency: 'NGN',
+        ref: 'ORDER_' + currentOrderId + '_' + Date.now(),
+        callback: (response) => {
+          verifyPayment(response.reference);
+        },
+        onClose: () => {
+          addBotMessage('Payment cancelled. You can try again anytime.');
+        }
+      });
+      handler.openIframe();
+    };
+
+    const verifyPayment = (reference) => {
+      showTyping();
+      fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          reference: reference,
+          orderId: currentOrderId 
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        removeTyping();
+        addBotMessage(data.message + '\n\n📋 **Menu Options:**\n1️⃣ - Place an order\n9️⃣7️⃣ - See current order\n9️⃣9️⃣ - Checkout order\n9️⃣8️⃣ - Order history\n0️⃣ - Cancel order');
+      })
+      .catch(err => {
+        removeTyping();
+        addBotMessage('Payment verification failed. Please contact support.');
+      });
+    };
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="success-container">
+    <div class="success-icon">✅</div>
+    <h1>Payment Successful!</h1>
+    <p>Your order has been confirmed and is being prepared.</p>
+    <p class="order-info">Thank you for your purchase!</p>
+    <a href="/" class="back-btn">Back to Chatbot</a>
+  </div>
+
+  <style>
+    .success-container {
+      text-align: center;
+      padding: 50px 20px;
+      max-width: 500px;
+      margin: 100px auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .success-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: scaleIn 0.5s ease-out;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    h1 {
+      color: #28a745;
+      margin-bottom: 15px;
+    }
+    p {
+      color: #666;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .order-info {
+      font-size: 14px;
+      color: #999;
+      margin-top: 20px;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: opacity 0.3s;
+    }
+    .back-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</body>
+</html>
